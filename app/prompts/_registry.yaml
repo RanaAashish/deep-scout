@@ -1,0 +1,8 @@
+# Global active versions for each agent
+agents:
+  planner: v1
+  scout: v1
+  critic: v1
+  synthesizer: v1
+  drafter: v1
+  validator: v1
