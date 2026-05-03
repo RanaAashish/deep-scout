@@ -1,4 +1,4 @@
-# Shadow Writer — Deep Research Agent System
+# deep-scout — Deep Research Agent System
 
 A multi-agent research system that takes a user-defined topic and intent, performs deep web research, and produces high-quality, structured output through iterative refinement.
 
