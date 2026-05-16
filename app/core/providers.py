@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import logging
-from functools import lru_cache
 
 from openai import AsyncOpenAI
-
+from agents import OpenAIChatCompletionsModel
 from core.settings import Settings
 
 logger = logging.getLogger(__name__)
@@ -94,11 +93,7 @@ def get_agent_model(settings: Settings, *, writer: bool = False):
     model_name = settings.openai_writer_model if writer else settings.openai_model
 
     if settings.llm_provider == "openai" and not settings.llm_base_url:
-        # Native OpenAI — just return the model string
         return model_name
-
-    # Non-OpenAI provider — wrap in OpenAIChatCompletionsModel
-    from agents import OpenAIChatCompletionsModel
 
     client = get_chat_client(settings)
     return OpenAIChatCompletionsModel(model=model_name, openai_client=client)

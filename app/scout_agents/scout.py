@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from agents import Agent, function_tool
 
-from agent_nodes.context import extend_sources
+from scout_agents.context import extend_sources
 from schemas.tool_result import SourceCard
 from core.providers import get_agent_model
 from core.settings import Settings
@@ -59,12 +59,8 @@ def create_scout_agent(settings: Settings) -> Agent:
     instructions = get_prompt("scout")
 
     return Agent(
-        name="ShadowScout",
+        name="ScoutAgent",
         instructions=instructions,
         tools=[search_tavily, search_serp, fetch_page],
         model=get_agent_model(settings),
     )
-
-
-# Backward-compat alias
-create_web_search_agent = create_scout_agent

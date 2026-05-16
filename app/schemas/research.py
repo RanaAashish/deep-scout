@@ -1,21 +1,24 @@
-from __future__ import annotations
-from typing import List
 from pydantic import BaseModel
-
-class ResearchPlan(BaseModel):
-    subtopics: List[str]
-    search_queries: List[str]
-    research_plan: List[str]
+from typing import List
 
 class ResearchInput(BaseModel):
     topic: str
     purpose: str = "learn"
-    depth: str = "intermediate"
-    output_format: str = "report"
+    depth: str = "standard"  # brief, standard, comprehensive
+    output_format: str = "explain"  # tutorial, deep-dive, comparison, explain, custom
     custom_instructions: str = ""
+    target_audience: str = "technical"
+    tone: str = "professional"  # formal, conversational, technical
+
+
+class ResearchPlan(BaseModel):
+    subtopics: List[str] = []
+    search_queries: List[str] = []
+    research_plan: List[str] = []
+
 
 DEPTH_MAP = {
-    "basic": 1,
-    "intermediate": 3,
-    "deep": 5,
+    "brief": 2,
+    "standard": 3,
+    "comprehensive": 5,
 }

@@ -1,0 +1,12 @@
+structure:
+  - Hook/Analogy
+  - Core Concept
+  - Technical Details
+  - Key Takeaways
+
+# Sample content for explain prompt
+
+- Hook/Analogy: Start with a relatable analogy to introduce agent observability...
+- Core Concept: Define agent observability clearly...
+- Technical Details: Discuss important metrics...
+- Key Takeaways: Recap the main ideas for effective learning.

@@ -1,53 +1,37 @@
 base: |
   {format_prompt}
 
-  Important rules:
-  - Only assert facts supported by the SOURCES and RESEARCH NOTES below.
-  - If you must speculate, prefix with [infer].
-  - Each non-obvious claim must cite a source as [n] matching the Sources list.
-  - Fragile or surprising claims should cite two distinct sources when possible.
-  - Align the content with the user's stated purpose: {purpose}
+  Core Rules:
+  - Stay tightly focused on the topic. Do NOT introduce generic sections (e.g., "Overview", "Introduction", "Key Concepts") unless explicitly required by the user.
+  - Every section or idea must directly contribute to answering the user's purpose: {purpose}
+  - Prefer specific, technical, and actionable insights over broad explanations.
+  - Avoid filler content — if a section could apply to any topic, it is too generic and must be refined or removed.
 
-formats:
-  notes: |
-    Write structured research notes for a technical reader.
-    Format:
-    - Use **bold headers** for each subtopic
-    - Bullet points for key facts, each cited with [n]
-    - Keep it scannable — no prose paragraphs
-    - End with an "Open Questions" section
-  blog: |
-    Write an engaging, well-structured blog post.
-    Format:
-    - Compelling hook opening paragraph
-    - Clear section headers (## Heading)
-    - Conversational but informed tone
-    - Include relevant examples and analogies
-    - Cite sources inline as [n]
-    - End with a conclusion + call-to-action
-  report: |
-    Write a structured research report for a professional audience.
-    Format:
-    - **Executive Summary** (3-5 sentences)
-    - **Key Definitions** (if applicable)
-    - **Methodology** (brief description of research approach)
-    - **Findings** (organized by subtopic, cited with [n])
-    - **Analysis & Takeaways** (3-7 bullets)
-    - **Recommendations** (if applicable)
-    - **Sources** (numbered list)
-    - **Open Questions**
-  tweet_thread: |
-    Write a Twitter/X thread from the research.
-    Format:
-    - Start with a powerful hook tweet (< 280 chars)
-    - Number each tweet: 1/, 2/, 3/, etc.
-    - Each tweet should be self-contained but flow as a narrative
-    - Use simple language, avoid jargon
-    - Include 1-2 key stats or surprising facts
-    - End with a summary tweet + CTA
-    - Suggest 3-5 relevant hashtags at the end
-    - Keep total thread to 5-12 tweets
+  Evidence Rules:
+  - Only assert facts supported by the SOURCES and RESEARCH NOTES below.
+  - Each non-obvious claim must cite a source as [n].
+  - Fragile or surprising claims should cite two sources when possible.
+  - If you must speculate, prefix with [infer].
+
+  Structure Guidance:
+  - Adapt the structure dynamically based on the topic — do NOT force predefined sections.
+  - Use clear headings, but only when they add meaning.
+  - Prioritize depth, comparison, trade-offs, architecture, and real-world usage where relevant.
+
+  formats:
   custom: |
-    Write a well-structured research output following the user's custom instructions below.
+    Generate a well-structured research output using a flexible format.
+
+    Requirements:
+    - Choose the most appropriate structure based on the topic (not predefined templates)
+    - Focus on depth, clarity, and usefulness for the user's purpose
+    - Include comparisons, frameworks, or technical details if relevant
+    - Avoid generic sections like "Overview", "History", or "Basics" unless explicitly needed
+    - Ensure logical flow between sections
+
+    Output should feel like:
+    - A sharp technical breakdown OR
+    - A deep-dive analysis OR
+    - A framework comparison / system design writeup
+
     Cite sources as [n] where applicable.
-    Ensure accuracy and clarity.

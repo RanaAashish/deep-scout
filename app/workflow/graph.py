@@ -5,21 +5,22 @@ from typing import Any, Dict, List
 
 from agents import Runner
 
-from agent_nodes.scout import create_scout_agent
-from agent_nodes.context import (
+from scout_agents.scout import create_scout_agent
+from scout_agents.context import (
     reset_source_bucket,
     set_source_bucket,
 )
-from schemas.output import CritiqueResult, ValidationResult
 from schemas.research import ResearchInput, ResearchPlan
 from schemas.tool_result import SourceCard
-from agents.validator import CitationValidator
-from agents.critic import CriticAgent
-from agents.drafter import DraftGenerator
-from agents.planner import PlannerAgent
-from agents.synthesizer import SynthesizerAgent
+from scout_agents.validator import CitationValidator
+from scout_agents.critic import CriticAgent
+from scout_agents.drafter import DraftGenerator
+from scout_agents.planner import PlannerAgent
+from scout_agents.synthesizer import SynthesizerAgent
 from core.settings import Settings
 from prompts._loader import get_prompt
+
+from langgraph.graph import StateGraph, END
 
 logger = logging.getLogger(__name__)
 
@@ -37,19 +38,10 @@ class PipelineState(dict):
 
 
 # =========================================================
-# Base Node
+# Full Deep Research Pipeline (PRD §4)
 # =========================================================
 
-class BaseNode:
-    async def run(self, state: PipelineState) -> Dict[str, Any]:
-        raise NotImplementedError
-
-
-# =========================================================
-# Scout Node (Research Agent — PRD §5.2)
-# =========================================================
-
-class ScoutNode(BaseNode):
+class ScoutNode:
     """
     Performs one research round:
     - Calls agent
@@ -91,7 +83,7 @@ class ScoutNode(BaseNode):
                 purpose=purpose,
                 subtopic_focus=subtopic_focus,
                 extra_block=extra_block,
-                transcript=state.get("scout_transcript") or "(none)",
+                transcript=state.get("research_transcript") or "(none)",
             )
 
             result = await Runner.run(agent, prompt)
@@ -104,16 +96,16 @@ class ScoutNode(BaseNode):
             reset_source_bucket(token)
 
         merged_sources = self._merge_sources(
-            state.get("source_cards") or [],
+            state.get("sources") or [],
             bucket,
         )
 
         return {
-            "scout_transcript": (state.get("scout_transcript") or "")
+            "research_transcript": (state.get("research_transcript") or "")
             + "\n\n## Round\n"
             + final,
             "iteration": iteration + 1,
-            "source_cards": merged_sources,
+            "sources": merged_sources,
         }
 
     def _merge_sources(
@@ -144,42 +136,10 @@ class ScoutNode(BaseNode):
 
 
 # =========================================================
-# Brief Node (legacy — kept for backward compat)
-# =========================================================
-
-class BriefNode(BaseNode):
-    """
-    Generates final research markdown from:
-    - Transcript
-    - Source cards
-    """
-
-    def __init__(self, settings: Settings):
-        self.settings = settings
-
-    async def run(self, state: PipelineState) -> Dict[str, Any]:
-        from agents_nodes.brief_writer import write_research_brief
-
-        cards = [
-            SourceCard.model_validate(d)
-            for d in (state.get("source_cards") or [])
-        ]
-
-        markdown = await write_research_brief(
-            topic=state["topic"],
-            scout_transcript=state.get("scout_transcript") or "",
-            source_cards=cards,
-            settings=self.settings,
-        )
-
-        return {"research_markdown": markdown}
-
-
-# =========================================================
 # Full Deep Research Pipeline (PRD §4)
 # =========================================================
 
-class ShadowPipeline:
+class ResearchPipeline:
     """
     Multi-agent deep research pipeline:
 
@@ -209,7 +169,7 @@ class ShadowPipeline:
         max_iterations = state.get("max_iterations", 3)
 
         logger.info(
-            "[bold cyan]🚀 Starting Shadow Pipeline[/bold cyan]\n"
+            "[bold cyan]Starting Research Pipeline[/bold cyan]\n"
             "   [blue]Topic:[/blue] %r\n"
             "   [blue]Purpose:[/blue] %r\n"
             "   [blue]Iterations:[/blue] %d\n"
@@ -255,7 +215,7 @@ class ShadowPipeline:
             update = await self.scout.run(state)
             state.update(update)
 
-        sources = [SourceCard.model_validate(d) for d in state.get("source_cards", [])]
+        sources = [SourceCard.model_validate(d) for d in state.get("sources", [])]
         logger.info("[green]✅ Research complete:[/green] %d sources collected", len(sources))
 
         # ── 3. Draft Generator ───────────────────
@@ -265,8 +225,8 @@ class ShadowPipeline:
             topic=topic,
             purpose=purpose,
             output_format=output_format,
-            scout_transcript=state.get("scout_transcript", ""),
-            source_cards=sources,
+            research_transcript=state.get("research_transcript", ""),
+            sources=sources,
             custom_instructions=custom_instructions,
         )
 
@@ -330,11 +290,10 @@ class LangGraphCompiler:
     Keeps LangGraph OUT of core logic.
     """
 
-    def __init__(self, pipeline: ShadowPipeline):
+    def __init__(self, pipeline: ResearchPipeline):
         self.pipeline = pipeline
 
     def compile(self):
-        from langgraph.graph import StateGraph, END
 
         builder = StateGraph(dict)
 
@@ -353,5 +312,5 @@ def compile_shadow_pipeline(settings: Settings, *, use_planner: bool = True):
     """
     Returns a LangGraph compiled graph for the full deep research pipeline.
     """
-    pipeline = ShadowPipeline(settings, use_planner=use_planner)
+    pipeline = ResearchPipeline(settings, use_planner=use_planner)
     return LangGraphCompiler(pipeline).compile()

@@ -1,0 +1,14 @@
+structure:
+  - Introduction
+  - Criteria for Comparison
+  - Feature Matrix
+  - Pros and Cons
+  - Decision Matrix
+
+# Sample content for comparison prompt
+
+- Introduction: We will compare different agent observability frameworks...
+- Criteria for Comparison: Specify what to look for...
+- Feature Matrix: Summarize the features in a table...
+- Pros and Cons: Highlight the strengths and weaknesses...
+- Decision Matrix: Provide a guideline for selecting the best approach based on specific needs.

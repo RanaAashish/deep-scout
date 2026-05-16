@@ -1,0 +1,19 @@
+structure:
+  - Title
+  - Prerequisites
+  - Overview
+  - Steps
+  - Troubleshooting
+  - Resources
+
+# Sample content for tutorial prompt
+
+- Title: Understanding Agent Observability
+- Prerequisites: Familiarity with basic AI concepts
+- Overview: This tutorial explores the key aspects of agent observability...
+- Steps:
+  1. Define agent observability
+  2. Key metrics to monitor...
+  3. Use tools to collect data...
+- Troubleshooting: Common issues in observability
+- Resources: Links to further readings

@@ -1,0 +1,14 @@
+structure:
+  - Executive Summary
+  - Architecture Overview
+  - Key Components
+  - Trade-offs
+  - Use Cases
+
+# Sample content for deep-dive prompt
+
+- Executive Summary: This section provides a brief overview of...
+- Architecture Overview: Discuss the architecture of agent observability...
+- Key Components: Highlight the important metrics...
+- Trade-offs: Compare different methodologies used in observability...
+- Use Cases: Real-world examples of agent observability applications.

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Literal
 
 from schemas.tool_result import SourceCard
 from core.providers import get_chat_client
@@ -11,9 +10,6 @@ from core.settings import Settings
 from prompts._loader import get_prompt
 
 logger = logging.getLogger(__name__)
-
-
-
 
 
 class DraftGenerator:
@@ -29,23 +25,28 @@ class DraftGenerator:
         purpose: str,
         output_format: str,
         scout_transcript: str,
-        source_cards: list[SourceCard],
+        sources: list[SourceCard],
         custom_instructions: str = "",
     ) -> str:
         client = get_chat_client(self.settings)
 
         # Build numbered source list
-        numbered_sources = self._format_sources(source_cards)
+        numbered_sources = self._format_sources(sources)
 
         # Select format prompt
         format_prompt = get_prompt("drafter", "formats", output_format)
         if not format_prompt:
-            format_prompt = get_prompt("drafter", "formats", "report")
+            logger.info(
+                "   [dim]Draft format %r not found; using custom flexible format[/dim]",
+                output_format,
+            )
+            format_prompt = get_prompt("drafter", "formats", "custom")
+            output_format = "custom"
 
         system_base = get_prompt("drafter", "base")
         system = system_base.format(format_prompt=format_prompt, purpose=purpose)
 
-        if output_format == "custom" and custom_instructions:
+        if custom_instructions:
             system += f"\n\nCustom instructions from user:\n{custom_instructions}"
 
         user_content = f"""Topic: {topic}
@@ -58,7 +59,7 @@ class DraftGenerator:
         {numbered_sources}
         """
 
-        logger.info("   [dim]Sources provided:[/dim] %d", len(source_cards))
+        logger.info("   [dim]Sources provided:[/dim] %d", len(sources))
         logger.debug("System prompt: %s", system)
 
         response = await client.chat.completions.create(
@@ -75,12 +76,12 @@ class DraftGenerator:
         return draft
 
     @staticmethod
-    def _format_sources(source_cards: list[SourceCard]) -> str:
-        if not source_cards:
+    def _format_sources(sources: list[SourceCard]) -> str:
+        if not sources:
             return "(no structured sources — stay conservative)"
 
         lines: list[str] = []
-        for i, c in enumerate(source_cards, start=1):
+        for i, c in enumerate(sources, start=1):
             line = f"[{i}] {c.title or '(untitled)'} — {c.url}\n   Snippet: {c.snippet[:400]}"
             if c.text_excerpt:
                 line += f"\n   Excerpt: {c.text_excerpt[:600]}"

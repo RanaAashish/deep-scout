@@ -1,145 +1,187 @@
-# deep-scout — Deep Research Agent System
+# 🔭 Deep Scout
 
-A multi-agent research system that takes a user-defined topic and intent, performs deep web research, and produces high-quality, structured output through iterative refinement.
+### A powerful, modular, multi-agent AI research system
 
-The system mimics how a human expert works:
-1. **Plans** research (Planner Agent)
-2. **Gathers** information (Research Agent / Scout)
-3. **Writes** a draft (Draft Generator)
-4. **Critiques** it (Critic Agent)
-5. **Refines** into final output (Synthesizer + Citation Validator)
+*Autonomously explores topics · Gathers information from the web · Produces high-quality research outputs*
 
-## Architecture
+---
 
-```text
-User Input (topic, purpose, depth, output_format)
-   ↓
-┌─────────────────┐
-│  Planner Agent   │  → subtopics, search queries, research plan
-└────────┬────────┘
-         ↓
-┌─────────────────┐
-│  Research Agent  │  → multi-round web research (Tavily + Serper)
-│  (Scout)         │     iterates per depth: basic=1, intermediate=3, deep=5
-└────────┬────────┘
-         ↓
-┌─────────────────┐
-│ Draft Generator  │  → format-aware first draft (notes/blog/report/tweet/custom)
-└────────┬────────┘
-         ↓
-┌─────────────────┐
-│  Critic Agent    │  → issues, improvements, score (0-10)
-└────────┬────────┘
-         ↓
-┌─────────────────┐
-│  Synthesizer     │  → refined draft addressing critique
-└────────┬────────┘
-         ↓
-┌──────────────────┐
-│ Citation Validator│  → removes hallucinated citations, confidence score
-└────────┬─────────┘
-         ↓
-    Final Output
+![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=flat-square&logo=streamlit&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-2ea043?style=flat-square)
+![Status](https://img.shields.io/badge/Status-Active-3fb950?style=flat-square)
+![Agents](https://img.shields.io/badge/Agents-6_Specialized-bc8cff?style=flat-square)
+
+---
+
+## 🏗️ Architecture
+
+The research pipeline runs sequentially through **6 specialized agents**:
+
+```
+┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌────────────┐   ┌───────────┐
+│ Planner  │──▶│  Scout   │──▶│ Drafter  │──▶│  Critic  │──▶│ Synthesizer│──▶│ Validator │
+│    📋    │   │(N rounds)│   │    ✍️    │   │    ⚖️    │   │     🧬     │   │    🛡️    │
+└──────────┘   └──────────┘   └──────────┘   └──────────┘   └────────────┘   └───────────┘
+     │               │               │               │               │               │
+     ▼               ▼               ▼               ▼               ▼               ▼
+   Plan           Sources          Draft          Critique         Final          Validated
+                                                  + Score          Output         Citations
 ```
 
-## Layout
+| # | Agent | Role |
+|---|-------|------|
+| 1 | 📋 **Planner** | Analyzes topic, creates research plan with subtopics and search queries |
+| 2 | 🔍 **Scout** | Executes research using Tavily, gathers sources *(N rounds)* |
+| 3 | ✍️ **Drafter** | Generates initial content from research transcript and sources |
+| 4 | ⚖️ **Critic** | Evaluates draft quality, assigns score, identifies issues and improvements |
+| 5 | 🧬 **Synthesizer** | Refines and polishes content incorporating critic feedback |
+| 6 | 🛡️ **Validator** | Validates all citations, ensures source credibility |
 
-```text
-shadow_writer/
-  main.py              # ResearchApp — high-level OOP API
-  research_session.py  # ResearchSession → graph + artifacts
-  settings.py          # Env / pydantic-settings
-  memory.py            # Optional local SQLite index
-  graph/
-    shadow_graph.py    # ShadowPipeline — full agent pipeline
-  agents/
-    scout_agent.py     # Web research agent (Tavily + Serper + scrape)
-    brief_writer.py    # Legacy brief writer (still usable)
-    tool_context.py    # Per-run source accumulation
-    tool_agents/
-  reasoning/
-    planner_agent.py   # Breaks topic into subtopics + queries
-    draft_generator.py # Format-aware draft generation
-    critic_agent.py    # Quality evaluation + scoring
-    synthesizer_agent.py  # Draft refinement from critique
-    citation_validator.py # Grounding + confidence scoring
-  tools/
-    tavily_search.py
-    serper.py
-    scrape.py
-  models/
-    types.py           # ResearchInput, ResearchPlan, CritiqueResult, etc.
-    export.py
-artifacts/             # gitignored outputs
-```
+---
 
-## Virtual environment
+## 🚀 Quick Start
+
+### 1 · Clone & Install
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
+git clone https://github.com/RanaAashish/deep-scout.git
+cd deep-scout
 pip install -r requirements.txt
 ```
 
-Copy `.env.example` → `.env` and add keys (`OPENAI_API_KEY`, plus `TAVILY_API_KEY` / `SERPER_API_KEY`).
+### 2 · Configure Environment
 
-## User Input
+Create a `.env` file in the project root:
 
-The system accepts structured input:
-
-```python
-{
-    "topic": "Agent orchestration frameworks in GenAI",
-    "purpose": "learn and create LinkedIn content",
-    "depth": "deep",             # basic | intermediate | deep
-    "output_format": "blog"      # notes | blog | report | tweet_thread | custom
-}
+```env
+LLM_PROVIDER=openrouter
+OPENROUTER_API_KEY=your_openrouter_key
+TAVILY_API_KEY=your_tavily_key
+SERPER_API_KEY=your_serper_key
+OPENAI_MODEL=openai/gpt-4o-mini
 ```
 
-| Depth         | Research Rounds |
-|---------------|-----------------|
-| `basic`       | 1               |
-| `intermediate`| 3               |
-| `deep`        | 5               |
+### 3 · Run the App
 
-## Python API
-
-```python
-from main import ResearchApp
-
-app = ResearchApp()
-
-# Standard research
-result = await app.research(
-    topic="Agent orchestration frameworks in GenAI",
-    purpose="learn and create LinkedIn content",
-    depth="deep",
-    output_format="blog",
-)
-
-# Deep research (convenience — same as depth="deep")
-result = await app.deep_research(
-    topic="RAG vs Fine-tuning tradeoffs",
-    purpose="write a comparison report",
-    output_format="report",
-)
+```bash
+streamlit run app/streamlit_app.py
 ```
 
-### Convenience functions
+---
 
-```python
-from main import run_research, run_deep_research
+## 🖥️ Streamlit Interface
 
-md = await run_research("Your topic", depth="intermediate", output_format="notes")
-md = await run_deep_research("Your topic", output_format="report")
+### Input Panel
+
+Enter your research topic and configure settings:
+
+| Setting | Options |
+|---------|---------|
+| **Topic** | What you want to research |
+| **Purpose** | `learn` · `write` · `compare` · `debug` |
+| **Depth** | `basic` (2 rounds) · `intermediate` (3 rounds) · `deep` (5 rounds) |
+| **Output Format** | `report` · `tutorial` · `deep-dive` · `comparison` · `explain` |
+
+### Research Progress
+
+Watch the research pipeline execute in real-time:
+
+```
+📋  Research plan generated
+🔍  Each research round with source count
+✍️  Draft generated
+⚖️  Critique complete with score
+🧬  Synthesis in progress
+🛡️  Citation validation
 ```
 
-## Output Formats
+### Final Output
 
-| Format         | Style |
-|----------------|-------|
-| `notes`        | Bullet-point summary with headers, scannable |
-| `blog`         | Intro → sections → conclusion, conversational |
-| `report`       | Executive summary → methodology → findings → recommendations |
-| `tweet_thread` | Numbered tweets, hook-first, hashtags |
-| `custom`       | User-provided instructions via `custom_instructions` |
+The results display:
+- ✅ Complete markdown article
+- 📊 Source count and critique score
+- 🎯 Confidence score
+
+---
+
+## 📖 Usage Guide
+
+### Output Formats
+
+| Format | Use Case |
+|--------|----------|
+| `report` | General research |
+| `tutorial` | Learning a topic |
+| `deep-dive` | Technical exploration |
+| `comparison` | Comparing options |
+| `explain` | Concept explanation |
+
+### Purpose Modes
+
+| Purpose | Description |
+|---------|-------------|
+| `learn` | Educational content with clear explanations |
+| `write` | Publication-ready content |
+| `compare` | Side-by-side comparisons |
+| `debug` | Problem analysis and solutions |
+
+### Depth Levels
+
+| Depth | Iterations | Use Case |
+|-------|------------|----------|
+| `basic` | 2 | Quick overview |
+| `intermediate` | 3 | Standard research |
+| `deep` | 5 | Comprehensive analysis |
+
+---
+
+## ⚙️ Configuration
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `LLM_PROVIDER` | LLM provider (`openrouter` \| `openai`) | `openrouter` |
+| `OPENROUTER_API_KEY` | OpenRouter API key | — |
+| `OPENAI_API_KEY` | OpenAI API key | — |
+| `TAVILY_API_KEY` | Tavily search API key | — |
+| `SERPER_API_KEY` | Serper search API key | — |
+| `OPENAI_MODEL` | Model for research agents | `openai/gpt-4o-mini` |
+| `OPENAI_WRITER_MODEL` | Model for writing agents | `openai/gpt-4o-mini` |
+
+---
+
+## 📁 Project Structure
+
+```
+deep-scout/
+├── app/
+│   ├── streamlit_app.py          # Streamlit web interface
+│   ├── core/                     # Core utilities
+│   │   ├── settings.py           # Configuration
+│   │   ├── providers.py          # LLM providers
+│   │   └── logging_config.py     # Logging setup
+│   ├── scout_agents/             # Agent implementations
+│   │   ├── planner.py            # Planning agent
+│   │   ├── scout.py              # Research agent
+│   │   ├── drafter.py            # Draft generation
+│   │   ├── critic.py             # Quality critique
+│   │   ├── synthesizer.py        # Refinement
+│   │   ├── validator.py          # Citation validation
+│   │   └── context.py            # Agent context
+│   ├── workflow/                 # Pipeline logic
+│   │   ├── graph.py              # Research pipeline
+│   │   ├── session.py            # Session management
+│   │   └── memory.py             # Artifact storage
+│   ├── tools/                    # Search & scraping
+│   │   ├── search/               # Search tools (Tavily, Serper)
+│   │   └── scrape.py             # Web scraping
+│   ├── schemas/                  # Data models
+│   └── prompts/                  # Agent prompts
+│       ├── agents/               # Agent instructions
+│       └── formats/              # Output templates
+├── data/                         # Generated outputs
+├── requirements.txt              # Dependencies
+└── pyproject.toml                # Project config
+```
+
+---
