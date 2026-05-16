@@ -181,7 +181,6 @@ deep-scout/
 │       └── formats/              # Output templates
 ├── data/                         # Generated outputs
 ├── requirements.txt              # Dependencies
-└── pyproject.toml                # Project config
 ```
 
 ---
